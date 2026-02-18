@@ -18,6 +18,7 @@ public class ServerMain extends ApplicationAdapter {
 
         batch = new SpriteBatch();
         font = new BitmapFont();
+        //Aca se inicia el servidor
 
         server = new GameServer();
         server.start();

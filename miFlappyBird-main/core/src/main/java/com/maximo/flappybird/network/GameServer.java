@@ -8,38 +8,44 @@ public class GameServer {
 
     private static final int PORT = 5000;
     private static final int MAX_PLAYERS = 2;
-
+    //Lista de jugadores conectados en el server
     private List<PlayerConnection> players = new ArrayList<>();
 
     public void start() {
-
+        //Se corre en hilos independientes, esto para que el renderizado de la interfaz no de bloquee
         Thread thread = new Thread(() -> {
 
             try {
+                //Abre un socket en el puerto 5000 declarado arriba
                 DatagramSocket socket = new DatagramSocket(PORT);
                 byte[] buffer = new byte[1024];
 
                 while (true) {
-
+                    //queda escuchando, hasta que recibe un paquete lo recible en DatagramPacket
                     DatagramPacket packet =
                         new DatagramPacket(buffer, buffer.length);
-
+                    //Y aca "traduce" el paquete a un mensaje para que se entienda
                     socket.receive(packet);
 
                     String message =
                         new String(packet.getData(), 0, packet.getLength());
-
+                    //Aca identifica a cada cliente por la IP y puerto de onexion
                     InetAddress address = packet.getAddress();
+                    //y el puerto lo guarda aca
                     int port = packet.getPort();
 
                     PlayerConnection player =
                         getOrCreatePlayer(address, port);
-
-                    String[] parts = message.split("\\|");
-
-                    player.y = Integer.parseInt(parts[0].split(":")[1]);
-                    player.alive = parts[1].split(":")[1].equals("1");
-                    player.score = Integer.parseInt(parts[2].split(":")[1]);
+                    /*Aca el servidor recibe el estado, posicion y score del cliente, y entoncecs
+                    * se lo pasa al otro cliente, para que este al tanto de lo mismo y pueda
+                    * tambien ver al jugador, de esta manera el servidor muestra en la pantalla de los
+                    * clientes al otro cliente*/
+                    if (message.contains("Y:")) {
+                        String[] parts = message.split("\\|");
+                        player.y = Integer.parseInt(parts[0].split(":")[1]);
+                        player.alive = parts[1].split(":")[1].equals("1");
+                        player.score = Integer.parseInt(parts[2].split(":")[1]);
+                    }
 
                     sendGameState(socket);
                 }
@@ -53,7 +59,8 @@ public class GameServer {
         thread.start();
     }
 
-
+    /*aca lo que hago es verificar si el cliente ya se encuentra en la
+    lista o no, para agregarlo o dejarlo, y si hay espacio (deben se maximo 2)*/
     private PlayerConnection getOrCreatePlayer(InetAddress address, int port) {
 
         for (PlayerConnection p : players) {
@@ -65,7 +72,7 @@ public class GameServer {
         if (players.size() >= MAX_PLAYERS) {
             return players.get(0);
         }
-
+        //Aca aclaro que el primero en conectarse es azul y el segundo es rojo
         String color = players.size() == 0 ? "BLUE" : "RED";
 
         PlayerConnection newPlayer =
@@ -98,9 +105,10 @@ public class GameServer {
                 .append("|");
         }
 
-        byte[] sendData = data.toString().getBytes();
-
         for (PlayerConnection p : players) {
+
+            String personalData = "YOU:" + p.color + "|" + data.toString();
+            byte[] sendData = personalData.getBytes();
 
             DatagramPacket packet =
                 new DatagramPacket(sendData, sendData.length, p.address, p.port);
@@ -108,6 +116,9 @@ public class GameServer {
             socket.send(packet);
         }
     }
+
+
+
     public int getPlayerCount() {
         return players.size();
     }
