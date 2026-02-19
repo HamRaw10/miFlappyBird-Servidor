@@ -35,17 +35,21 @@ public class GameServer {
                     int port = packet.getPort();
 
                     PlayerConnection player =
+                        //Aca actualiza el PlayerConnection
                         getOrCreatePlayer(address, port);
                     /*Aca el servidor recibe el estado, posicion y score del cliente, y entoncecs
                     * se lo pasa al otro cliente, para que este al tanto de lo mismo y pueda
                     * tambien ver al jugador, de esta manera el servidor muestra en la pantalla de los
                     * clientes al otro cliente*/
-                    if (message.contains("Y:")) {
-                        String[] parts = message.split("\\|");
-                        player.y = Integer.parseInt(parts[0].split(":")[1]);
-                        player.alive = parts[1].split(":")[1].equals("1");
-                        player.score = Integer.parseInt(parts[2].split(":")[1]);
+                    if (message.contains(",")) {
+
+                        String[] parts = message.split(",");
+
+                        player.y = Integer.parseInt(parts[0]);
+                        player.alive = parts[1].equals("1");
+                        player.score = Integer.parseInt(parts[2]);
                     }
+
 
                     sendGameState(socket);
                 }
@@ -104,7 +108,7 @@ public class GameServer {
                 .append(p.color)
                 .append("|");
         }
-
+        //Aca el server envia el estado global de cada cliente
         for (PlayerConnection p : players) {
 
             String personalData = "YOU:" + p.color + "|" + data.toString();

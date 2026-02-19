@@ -7,9 +7,10 @@ public class PlayerConnection {
     public InetAddress address;
     public int port;
 
-    public int y;
-    public boolean alive;
-    public int score;
+    public boolean alive = true;
+    public int y = 300;
+    public int score = 0;
+
 
     public String color;
 
